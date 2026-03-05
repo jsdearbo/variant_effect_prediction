@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "variant-effect-prediction"
+version = "0.1.0"
+description = "Variant effect prediction toolkit for genomic sequence-to-function models"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "James Dearborn"},
+]
+
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+]
+
+[project.optional-dependencies]
+grelu = [
+    "grelu",
+]
+genome = [
+    "pysam>=0.20",
+]
+viz = [
+    "matplotlib>=3.7",
+    "seaborn>=0.12",
+]
+splice = [
+    "torch>=2.0",
+]
+dev = [
+    "pytest>=7.0",
+]
+all = [
+    "variant-effect-prediction[grelu,genome,viz,splice,dev]",
+]
+
+[tool.setuptools.packages.find]
+include = ["vcf_utils*", "prediction*", "analysis*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

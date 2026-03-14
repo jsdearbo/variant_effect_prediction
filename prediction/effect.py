@@ -69,6 +69,7 @@ def predict_variant_effects(
     max_seq_shift: int = 0,
     compare_func: Optional[Union[str, Callable]] = "log2fc",
     prediction_transform: Optional[Callable] = None,
+    sequence_provider: Optional[Callable] = None,
 ) -> pd.DataFrame:
     """
     Predict functional effects of genetic variants.
@@ -108,6 +109,8 @@ def predict_variant_effects(
         If None, returns raw ref and alt predictions.
     prediction_transform : callable, optional
         Transform to apply to raw model output before comparison.
+    sequence_provider : callable, optional
+        Function to fetch reference and alternate sequences from fasta or random sequence generator.
 
     Returns
     -------
@@ -123,7 +126,7 @@ def predict_variant_effects(
         )
     else:
         return _predict_simple(
-            variants, model, seq_len, compare_func, prediction_transform, devices,
+            variants, model, seq_len, compare_func, prediction_transform, devices, sequence_provider,
         )
 
 
@@ -180,7 +183,7 @@ def _predict_with_grelu(
 
 
 def _predict_simple(
-    variants, model, seq_len, compare_func, prediction_transform, devices,
+    variants, model, seq_len, compare_func, prediction_transform, devices, sequence_provider=None,
 ):
     """Fallback prediction loop without grelu VariantDataset."""
     from vcf_utils.coordinates import variant_to_ref_alt_seqs
@@ -198,16 +201,36 @@ def _predict_simple(
     valid_mask = []
 
     for _, row in variants.iterrows():
+
         try:
-            ref_s, alt_s = variant_to_ref_alt_seqs(
-                row["chrom"], row["pos"], row["ref"], row["alt"],
-                genome_fasta="",  # Requires genome_fasta in caller
-                seq_len=seq_len,
-            )
+
+            if sequence_provider is not None:
+
+                ref_s, alt_s = sequence_provider(
+                    row["chrom"],
+                    row["pos"],
+                    row["ref"],
+                    row["alt"],
+                    seq_len,
+                )
+
+            else:
+
+                ref_s, alt_s = variant_to_ref_alt_seqs(
+                    row["chrom"],
+                    row["pos"],
+                    row["ref"],
+                    row["alt"],
+                    genome_fasta="",
+                    seq_len=seq_len,
+                )
+
             ref_seqs.append(ref_s)
             alt_seqs.append(alt_s)
             valid_mask.append(True)
+
         except Exception:
+
             ref_seqs.append(None)
             alt_seqs.append(None)
             valid_mask.append(False)
@@ -260,3 +283,26 @@ def _batch_predict(model, seqs, prediction_transform, device, batch_size=32):
     while combined.ndim > 1:
         combined = combined.mean(axis=-1)
     return combined
+
+
+def synthetic_ref_alt_seqs(chrom, pos, ref, alt, seq_len):
+    """
+    Generate synthetic sequences centered on a variant.
+    Used for demo notebooks so no genome FASTA is required.
+    """
+
+    bases = np.array(list("ACGT"))
+
+    # random reference sequence
+    seq = np.random.choice(bases, seq_len)
+
+    center = seq_len // 2
+    seq[center] = ref
+
+    ref_seq = "".join(seq)
+
+    alt_seq = seq.copy()
+    alt_seq[center] = alt
+    alt_seq = "".join(alt_seq)
+
+    return ref_seq, alt_seq

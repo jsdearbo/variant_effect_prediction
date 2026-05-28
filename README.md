@@ -1,5 +1,9 @@
 # variant-effect-prediction
 
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![CI](https://github.com/jsdearbo/variant_effect_prediction/actions/workflows/ci.yml/badge.svg)](https://github.com/jsdearbo/variant_effect_prediction/actions/workflows/ci.yml)
+
 Toolkit for predicting and analyzing the functional effects of genetic variants using genomic sequence-to-function models (Borzoi, Enformer, etc.). Covers the full variant analysis pipeline: VCF parsing, filtering, ref/alt effect prediction, statistical significance testing via marginalization, splice-site scoring, and publication-quality visualization.
 
 ## Modules

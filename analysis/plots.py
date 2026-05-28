@@ -5,6 +5,8 @@ Publication-quality plots for variant effect analysis: Manhattan-style
 plots, effect size distributions, and splice score tracks.
 """
 
+from __future__ import annotations
+
 from typing import Optional
 
 import numpy as np

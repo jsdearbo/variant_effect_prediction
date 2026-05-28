@@ -57,6 +57,24 @@ def compare_predictions(
         raise ValueError(f"Unknown comparison method: {method!r}")
 
 
+def _validate_model_interface(model):
+    """
+    Ensure the model implements a supported prediction interface.
+    """
+
+    if hasattr(model, "predict_on_dataset"):
+        return "dataset"
+
+    if hasattr(model, "predict_on_seqs"):
+        return "seqs"
+
+    raise TypeError(
+        "Model must implement one of:\n"
+        "  • predict_on_dataset(dataset)\n"
+        "  • predict_on_seqs(seqs)\n"
+    )
+
+
 def predict_variant_effects(
     variants: pd.DataFrame,
     model,
@@ -116,7 +134,8 @@ def predict_variant_effects(
         - ``effect_size``: Scalar effect for each variant
         - ``ref_pred``, ``alt_pred``: Raw predictions (if compare_func is None)
     """
-    if _HAS_GRELU and hasattr(model, "predict_on_dataset"):
+    interface = _validate_model_interface(model)
+    if _HAS_GRELU and interface == "dataset":
         return _predict_with_grelu(
             variants, model, seq_len, genome, batch_size, num_workers,
             devices, rc, max_seq_shift, compare_func, prediction_transform,
